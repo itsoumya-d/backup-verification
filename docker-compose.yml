@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: backupverify
+      POSTGRES_USER: backupverify
+      POSTGRES_PASSWORD: backupverify
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backupverify -d backupverify"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://backupverify:backupverify@db:5432/backupverify
+      API_KEYS: '{"change-me-admin":"admin","change-me-operator":"operator","change-me-viewer":"viewer"}'
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:
